@@ -20,7 +20,8 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-using var listener = AzureEventSourceListener.CreateTraceLogger(EventLevel.Verbose);
+using var traceLogger = AzureEventSourceListener.CreateTraceLogger(EventLevel.Verbose);
+using var consoleLogger = AzureEventSourceListener.CreateConsoleLogger(EventLevel.Verbose);
 
 // Configure Azure App Configuration and Key Vault services using the same DefaultAzureCredential.
 DefaultAzureCredential credential = new(new DefaultAzureCredentialOptions()
@@ -34,29 +35,35 @@ DefaultAzureCredential credential = new(new DefaultAzureCredentialOptions()
     ExcludeEnvironmentCredential = true,
 });
 
-Uri appConfigUri = new(builder.Configuration["APPCONFIG_URI"]);
-builder.Configuration.AddAzureAppConfiguration(options =>
+var endpoint = builder.Configuration["APPCONFIG_URI"];
+if (Uri.TryCreate(endpoint, UriKind.Absolute, out var endpointUri))
 {
-    options
-        .Connect(appConfigUri, credential)
-        .ConfigureClientOptions(configure =>
-        {
-            configure.Diagnostics.LoggedHeaderNames.Add("WWW-Authenticate");
-        })
-        .Select(Microsoft.Extensions.Configuration.AzureAppConfiguration.KeyFilter.Any);
-});
-
-Uri keyVaultUri = new(builder.Configuration["KEYVAULT_URI"]);
-SecretClient secretClient = new(keyVaultUri, credential, new()
-{
-    Diagnostics =
+    builder.Configuration.AddAzureAppConfiguration(options =>
     {
-        LoggedHeaderNames = {"WWW-Authenticate" },
-    }
-});
-builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+        options
+            .Connect(endpointUri, credential)
+            .ConfigureClientOptions(configure =>
+            {
+                configure.Diagnostics.LoggedHeaderNames.Add("WWW-Authenticate");
+            })
+            .Select(Microsoft.Extensions.Configuration.AzureAppConfiguration.KeyFilter.Any);
+    });
+}
 
-builder.Services.AddSingleton(secretClient);
+endpoint = builder.Configuration["KEYVAULT_URI"];
+if (Uri.TryCreate(endpoint, UriKind.Absolute, out endpointUri))
+{
+    SecretClient secretClient = new(endpointUri, credential, new()
+    {
+        Diagnostics =
+    {
+        LoggedHeaderNames = { "WWW-Authenticate" },
+    }
+    });
+    builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+
+    builder.Services.AddSingleton(secretClient);
+}
 
 var app = builder.Build();
 
