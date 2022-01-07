@@ -118,6 +118,7 @@ resource web 'Microsoft.Web/sites@2020-12-01' = {
   }
 }
 
+// App Configuration Data Reader (https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#app-configuration-data-reader)
 var configDataReaderDefinitionId = '516239f1-63e1-4d78-a4de-a74fb236a071'
 resource configDataReaderDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: config
@@ -144,6 +145,7 @@ resource configWebDataReaderAssignment 'Microsoft.Authorization/roleAssignments@
   }
 }
 
+// Key Vault Secrets User (https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-secrets-user)
 var kvSecretsUserDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 resource kvSecretsUserDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: config
