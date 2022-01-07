@@ -27,21 +27,35 @@ DefaultAzureCredential credential = new(new DefaultAzureCredentialOptions()
 {
     Diagnostics =
     {
-        IsLoggingContentEnabled = builder.Environment.IsDevelopment(),
+        LoggedQueryParameters = { "resource" },
     },
+
+    // The following is only to mitigate my development machine supplying the wrong SP and should not affect the repro.
+    ExcludeEnvironmentCredential = true,
 });
 
-//Uri appConfigUri = new(builder.Configuration["APPCONFIG_URI"]);
-//builder.Configuration.AddAzureAppConfiguration(options =>
-//{
-//    options
-//        .Connect(appConfigUri, credential)
-//        .Select(Microsoft.Extensions.Configuration.AzureAppConfiguration.KeyFilter.Any);
-//});
+Uri appConfigUri = new(builder.Configuration["APPCONFIG_URI"]);
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    options
+        .Connect(appConfigUri, credential)
+        .ConfigureClientOptions(configure =>
+        {
+            configure.Diagnostics.LoggedHeaderNames.Add("WWW-Authenticate");
+        })
+        .Select(Microsoft.Extensions.Configuration.AzureAppConfiguration.KeyFilter.Any);
+});
 
 Uri keyVaultUri = new(builder.Configuration["KEYVAULT_URI"]);
-SecretClient secretClient = new(keyVaultUri, credential);
+SecretClient secretClient = new(keyVaultUri, credential, new()
+{
+    Diagnostics =
+    {
+        LoggedHeaderNames = {"WWW-Authenticate" },
+    }
+});
 builder.Configuration.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+
 builder.Services.AddSingleton(secretClient);
 
 var app = builder.Build();
