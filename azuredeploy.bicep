@@ -119,14 +119,13 @@ resource web 'Microsoft.Web/sites@2020-12-01' = {
 }
 
 // App Configuration Data Reader (https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#app-configuration-data-reader)
-var configDataReaderDefinitionId = '516239f1-63e1-4d78-a4de-a74fb236a071'
 resource configDataReaderDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: config
-  name: configDataReaderDefinitionId
+  name: '516239f1-63e1-4d78-a4de-a74fb236a071'
 }
 
 resource configDataReaderAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (principalId != '') {
-  name: guid(subscription().id, resourceGroup().id, principalId, configDataReaderDefinitionId)
+  name: guid(subscription().id, resourceGroup().id, principalId, configDataReaderDefinition.name)
   scope: config
   properties: {
     roleDefinitionId: configDataReaderDefinition.id
@@ -136,7 +135,7 @@ resource configDataReaderAssignment 'Microsoft.Authorization/roleAssignments@202
 }
 
 resource configWebDataReaderAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(subscription().id, resourceGroup().id, 'web', configDataReaderDefinitionId)
+  name: guid(subscription().id, resourceGroup().id, 'web', configDataReaderDefinition.name)
   scope: config
   properties: {
     roleDefinitionId: configDataReaderDefinition.id
@@ -146,14 +145,13 @@ resource configWebDataReaderAssignment 'Microsoft.Authorization/roleAssignments@
 }
 
 // Key Vault Secrets User (https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-secrets-user)
-var kvSecretsUserDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 resource kvSecretsUserDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: config
-  name: kvSecretsUserDefinitionId
+  name: '4633458b-17de-408a-b874-0445c86b69e6'
 }
 
 resource kvSecretsUserAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = if (principalId != '') {
-  name: guid(subscription().id, resourceGroup().id, principalId, kvSecretsUserDefinitionId)
+  name: guid(subscription().id, resourceGroup().id, principalId, kvSecretsUserDefinition.name)
   scope: kv
   properties: {
     roleDefinitionId: kvSecretsUserDefinition.id
@@ -163,7 +161,7 @@ resource kvSecretsUserAssignment 'Microsoft.Authorization/roleAssignments@2020-0
 }
 
 resource kvWebSecretsUserAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(subscription().id, resourceGroup().id, 'web', kvSecretsUserDefinitionId)
+  name: guid(subscription().id, resourceGroup().id, 'web', kvSecretsUserDefinition.name)
   scope: kv
   properties: {
     roleDefinitionId: kvSecretsUserDefinition.id
